@@ -146,10 +146,12 @@ make_device() {
     sudo parted -s ${device} set 1 boot on
     echo "-> Writing syslinux MBR on ${device} ..."
     sudo dd bs=440 count=1 conv=notrunc if="${syslinux}/bios/mbr/mbr.bin" of=${device} 2>/dev/null
+    sudo losetup -d ${device}
+    device=$(sudo kpartx -av ${img} | head -n 1 | awk '{print $8}')
     echo "-> Creating FAT partition and fs on ${device} ..."
-    sudo mkfs -t vfat -F 32 -n "${vol_label}" ${device}p1 >/dev/null
+    sudo mkfs -t vfat -F 32 -n "${vol_label}" /dev/mapper${device##/dev}p1 >/dev/null
     echo "-> Mounting ${device}p1 on $(basename ${dst}) ..."
-    sudo mount -t vfat -o loop,uid=$(id -u $USER) ${device}p1 "${dst}"
+    sudo mount -t vfat -o loop,uid=$(id -u $USER) /dev/mapper${device##/dev}p1 "${dst}"
     echo "-> Installing syslinux (extlinux) ..."
     sudo mkdir -p "${sysl_path}"
     sudo "${syslinux}"/bios/extlinux/extlinux --install "${sysl_path}" 2>/dev/null
@@ -300,7 +302,7 @@ make_iso() {
 
     echo -n "-> Making hybrid ISO image $(basename ${output}) ... "
     cd "${dst}"
-    mkisofs -V "${label}" -quiet -l -r -J -input-charset utf-8 -o "${output}" \
+    genisoimage -V "${label}" -quiet -l -r -J -input-charset utf-8 -o "${output}" \
             -b syslinux/isolinux.bin -c syslinux/boot.cat \
             -no-emul-boot -boot-load-size 4 -boot-info-table .
     ${syslinux}/bios/utils/isohybrid "${output}"
@@ -336,9 +338,10 @@ finish() {
         echo "-> Umounting temporary mountpoint $(basename ${dst}) ..."
         sync && sleep 1
         sudo umount "${dst}"
-        device=$(sudo losetup --show -f "${img}")
+        #device=$(sudo losetup --show -f "${img}")
         echo "-> Disassociating ${img} with the loop device ${device} ..."
-        sudo losetup -d ${device}
+        sudo kpartx -d ${img}
+        #sudo losetup -d ${device}
     fi
     echo "-> Removing temporary folder $(basename ${dst}) ..."
     rm -rf "${dst}"
@@ -505,4 +508,10 @@ finish "${DST}" "${SYSLINUX_BASENAME}" "${OUT}.img"
 
 [ ! -z "${INSTALL_SCRIPT}" ] && echo -e "\n-> WARNING this image is like a virus!. Be careful, it is autoinstalable!\n"
 
+if [ "${IMG_TYPE}" == "ISO" ]
+then
+    cp ${OUT}.iso /out
+else
+    cp ${OUT}.img /out
+fi
 # EOF
