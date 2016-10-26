@@ -11,7 +11,7 @@ PROGRAM_DIR=$(cd $(dirname "$0") && pwd)
 PROGRAM_OPTS=$@
 
 # Default config
-SYSLINUX_VERSION="6.02"
+SYSLINUX_VERSION="6.03"
 COREOS_VERSION="current"
 COREOS_CHANNEL="stable"
 MEMTEST_VERSION="5.01"
