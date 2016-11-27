@@ -2,3 +2,4 @@
 syslinux*
 *.iso
 *.img
+**~
