@@ -8,12 +8,11 @@ echo done
 OUTPUT_DIR=out
 echo writing generated USB images to $OUTPUT_DIR...
 mkdir -p $OUTPUT_DIR
-echo done
 
 function write-image() {
     local NODE=$1 #core-1
     local DOMAIN=$2 #drewfus.org
-    local HOSTNAME=$NODE.$DOMAIN
+    local HOSTNAME=$NODE.$DOMAIN # core-1.drewfus.org
     echo building image for $HOSTNAME...
     rm -f out/$HOSTNAME.{iso,img}
     docker run --rm -it \
@@ -29,11 +28,12 @@ function write-image() {
 
 function write-images() {
     local DOMAIN=$1
-    
-    write-image "core-1" $DOMAIN
-#    write-image "core-2" $DOMAIN
-#    write-image "core-3" $DOMAIN
+    echo writing images for $DOMAIN...
+#    write-image core-1 $DOMAIN
+#    write-image core-2 $DOMAIN
+    write-image core-3 $DOMAIN
+    echo done writing images for $DOMAIN!
 }
 
-echo "hello world..."
-write-images "drewfus.org"
+
+write-images drewfus.org

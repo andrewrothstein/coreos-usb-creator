@@ -1,9 +1,10 @@
 #!/usr/bin/env sh
-NODE=core-1
-DOMAIN=drewfus.org
+DISK=${DISK:-disk4}
+NODE=${NODE:-core-1}
+DOMAIN=${DOMAIN:-drewfus.org}
 HOSTNAME=$NODE.$DOMAIN
-DISK=disk4
+echo writing image for $HOSTNAME to /dev/$DISK...
 diskutil unmountDisk /dev/$DISK
 dd bs=1m if=out/$HOSTNAME.iso of=/dev/r$DISK
 diskutil eject /dev/$DISK
-
+echo done!

@@ -5,7 +5,7 @@
 ssh_authorized_keys:
   - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDH3AT77Mn5ykwrFmQsX7pTmtBPHJ+BAHMRABfFUdsgXdgtom4D+zdkUdbTA3GpeDPUFb5bKAyV8ryhvb4X+TWMm+RBk4RBZMhVyDnQz/jVxO1Q9f7cth1enoCfY+4mInmpn08z5YL1KsAR39fV9RIYrJHDPDiVLdk+c7kDPLAkFa3oiJkuF6Qo6t9BPtLYww+Oh3B6I3+qisFQuZcDfKSCL6LKTeCJ9od9UZ33ZGJ1QJR8VDorAqSspPe7WuWtlfMDDgQo45h+1O+mZAWqeFKOm/ZwXleFisjMHbLSTByOLovbPwbozhjBtI3bQC4qoOREKBBavFrenZYx/36uOVsf drew@Andrews-MBP-2.drewfus.org
 
-hostname: core-2.drewfus.org
+hostname: core-3.drewfus.org
 
 write_files:
   - path: /etc/systemd/network/10-external.network
@@ -17,7 +17,7 @@ write_files:
 
       [Network]
       DNS=192.168.1.1
-      Address=192.168.1.3/24
+      Address=192.168.1.4/24
       Gateway=192.168.1.1
   - path: /etc/systemd/network/20-internal.network
     permissions: 0644
@@ -28,7 +28,7 @@ write_files:
 
       [Network]
       DNS=192.168.1.1
-      Address=172.16.0.2/12
+      Address=172.16.0.3/12
       Gateway=172.16.0.1
       
 coreos:
@@ -36,14 +36,14 @@ coreos:
     # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
     discovery: https://discovery.etcd.io/387c2db976c07ce2681ff2725fe5acc9
     # multi-region and multi-cloud deployments need to use $public_ipv4
-    advertise-client-urls: http://192.168.1.3:2379
-    initial-advertise-peer-urls: http://192.168.1.3:2380
+    advertise-client-urls: http://192.168.1.4:2379
+    initial-advertise-peer-urls: http://192.168.1.4:2380
     # listen on both the official ports and the legacy ports
     # legacy ports can be omitted if your application doesn't depend on them
     listen-client-urls: http://0.0.0.0:2379
-    listen-peer-urls: http://192.168.1.3:2380
+    listen-peer-urls: http://192.168.1.4:2380
   fleet:
-      public-ip: 192.168.1.3
+      public-ip: 192.168.1.4
   update:
     reboot-strategy: etcd-lock
   units:
@@ -81,7 +81,7 @@ coreos:
         - name: 10-docker-opts.conf
           content: |
             [Service]
-            Environment="DOCKER_OPTS=--bip 10.0.124.1/8"
+            Environment="DOCKER_OPTS=--bip 10.0.125.1/8"
     - name: docker.service
       command: start
 
