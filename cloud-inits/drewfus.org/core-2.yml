@@ -1,0 +1,81 @@
+#cloud-config
+# Modify this file to include your keys, unit, configuration ....
+# Have a look at https://github.com/coreos/coreos-cloudinit
+
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDH3AT77Mn5ykwrFmQsX7pTmtBPHJ+BAHMRABfFUdsgXdgtom4D+zdkUdbTA3GpeDPUFb5bKAyV8ryhvb4X+TWMm+RBk4RBZMhVyDnQz/jVxO1Q9f7cth1enoCfY+4mInmpn08z5YL1KsAR39fV9RIYrJHDPDiVLdk+c7kDPLAkFa3oiJkuF6Qo6t9BPtLYww+Oh3B6I3+qisFQuZcDfKSCL6LKTeCJ9od9UZ33ZGJ1QJR8VDorAqSspPe7WuWtlfMDDgQo45h+1O+mZAWqeFKOm/ZwXleFisjMHbLSTByOLovbPwbozhjBtI3bQC4qoOREKBBavFrenZYx/36uOVsf drew@Andrews-MBP-2.drewfus.org
+
+hostname: core-1.drewfus.org
+
+write_files:
+    - name: systemd-networkd.service
+      command: stop
+    - name: 00-enp0s25.network
+      runtime: true
+      content: |
+        [Match]
+        Name=enp0s25
+
+        [Network]
+        DNS=8.8.8.8
+        Address=172.16.0.1/12
+        Gateway=172.16.0.1
+    - name: 00-enp6s0.network
+      runtime: true
+      content: |
+        [Match]
+        Name=enp6s0
+
+        [Network]
+        DHCP=yes
+    - name: down-interfaces.service
+      command: start
+      content: |
+        [Service]
+        Type=oneshot
+        ExecStart=/usr/bin/ip link set enp0s25 down
+        ExecStart=/usr/bin/ip addr flush dev enps0s25
+    - name: systemd-networkd.service
+      command: restart
+
+coreos:
+  etcd2:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
+    discovery: https://discovery.etcd.io/e645c15fc9594a9f6d30cfbfcfddf82d
+    # multi-region and multi-cloud deployments need to use $public_ipv4
+    advertise-client-urls: http://172.16.0.1:2379
+    initial-advertise-peer-urls: http://172.16.0.1:2380
+    # listen on both the official ports and the legacy ports
+    # legacy ports can be omitted if your application doesn't depend on them
+    listen-client-urls: http://0.0.0.0:2379
+    listen-peer-urls: http://172.16.0.1:2380
+
+  fleet:
+      public-ip: 172.16.0.1
+
+  update:
+    reboot-strategy: etcd-lock
+
+  units:
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: docker-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+
+        [Socket]
+        ListenStream=2375
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
+    - name: docker.service
+      command: start
+
+        

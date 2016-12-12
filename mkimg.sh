@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -xe
 #
 # Coreos image builder (hybrid ISO and FAT32 IMG) for Linux
 # (c) 2014-2015 Jose Riguera <jriguera@gmail.com>
@@ -136,25 +137,24 @@ make_device() {
     local device
     local sysl_path="${dst}/syslinux"
 
-    echo "-> WARNING: You will need sudo permissions to operate with a loop device ..."
     echo "-> Creating base image ${img} with dd ..."
     dd if=/dev/zero of="${img}" bs=1M count=${size} 2>/dev/null
     echo "-> Associating ${img} with a loop device ..."
-    device=$(sudo losetup --show -f "${img}")
+    device=$(losetup --show -f "${img}")
     echo "-> Creating partitions on ${device} ..."
-    sudo parted -a optimal -s ${device} mklabel msdos -- mkpart primary fat32 1 -1
-    sudo parted -s ${device} set 1 boot on
+    parted -a optimal -s ${device} mklabel msdos -- mkpart primary fat32 1 -1
+    parted -s ${device} set 1 boot on
     echo "-> Writing syslinux MBR on ${device} ..."
-    sudo dd bs=440 count=1 conv=notrunc if="${syslinux}/bios/mbr/mbr.bin" of=${device} 2>/dev/null
-    sudo losetup -d ${device}
-    device=$(sudo kpartx -av ${img} | head -n 1 | awk '{print $8}')
+    dd bs=440 count=1 conv=notrunc if="${syslinux}/bios/mbr/mbr.bin" of=${device} 2>/dev/null
+    losetup -d ${device}
+    device=$(kpartx -av ${img} | head -n 1 | awk '{print $8}')
     echo "-> Creating FAT partition and fs on ${device} ..."
-    sudo mkfs -t vfat -F 32 -n "${vol_label}" /dev/mapper${device##/dev}p1 >/dev/null
+    mkfs -t vfat -F 32 -n "${vol_label}" /dev/mapper${device##/dev}p1 >/dev/null
     echo "-> Mounting ${device}p1 on $(basename ${dst}) ..."
-    sudo mount -t vfat -o loop,uid=$(id -u $USER) /dev/mapper${device##/dev}p1 "${dst}"
+    mount -t vfat -o loop,uid=$(id -u $USER) /dev/mapper${device##/dev}p1 "${dst}"
     echo "-> Installing syslinux (extlinux) ..."
-    sudo mkdir -p "${sysl_path}"
-    sudo "${syslinux}"/bios/extlinux/extlinux --install "${sysl_path}" 2>/dev/null
+    mkdir -p "${sysl_path}"
+    "${syslinux}"/bios/extlinux/extlinux --install "${sysl_path}" 2>/dev/null
 }
 
 
@@ -302,9 +302,16 @@ make_iso() {
 
     echo -n "-> Making hybrid ISO image $(basename ${output}) ... "
     cd "${dst}"
-    genisoimage -V "${label}" -quiet -l -r -J -input-charset utf-8 -o "${output}" \
-            -b syslinux/isolinux.bin -c syslinux/boot.cat \
-            -no-emul-boot -boot-load-size 4 -boot-info-table .
+    genisoimage \
+	-V "${label}" \
+	-quiet -l -r -J \
+	-input-charset utf-8 \
+	-o "${output}" \
+        -b syslinux/isolinux.bin \
+	-c syslinux/boot.cat \
+        -no-emul-boot \
+	-boot-load-size 4 \
+	-boot-info-table .
     ${syslinux}/bios/utils/isohybrid "${output}"
     echo "done"
 }
@@ -337,11 +344,8 @@ finish() {
     if mount | grep -q $(basename "${dst}"); then
         echo "-> Umounting temporary mountpoint $(basename ${dst}) ..."
         sync && sleep 1
-        sudo umount "${dst}"
-        #device=$(sudo losetup --show -f "${img}")
-        echo "-> Disassociating ${img} with the loop device ${device} ..."
-        sudo kpartx -d ${img}
-        #sudo losetup -d ${device}
+        umount "${dst}"
+        kpartx -d ${img}
     fi
     echo "-> Removing temporary folder $(basename ${dst}) ..."
     rm -rf "${dst}"
@@ -503,15 +507,16 @@ set_confiles "${DST}" "${INIT_SCRIPT}" "${FILES}" "${INSTALL_SCRIPT}" "${BOOT_PA
 # 6. if ISO: create iso
 [ "${IMG_TYPE}" == "ISO" ] && make_iso "${DST}" "${SYSLINUX_BASENAME}" "${VOL_LABEL}" "${OUT}.iso"
 
-# 7. Umount and delete folders
-finish "${DST}" "${SYSLINUX_BASENAME}" "${OUT}.img"
-
-[ ! -z "${INSTALL_SCRIPT}" ] && echo -e "\n-> WARNING this image is like a virus!. Be careful, it is autoinstalable!\n"
-
 if [ "${IMG_TYPE}" == "ISO" ]
 then
     cp ${OUT}.iso /out
 else
     cp ${OUT}.img /out
 fi
+
+# 7. Umount and delete folders
+finish "${DST}" "${SYSLINUX_BASENAME}" "${OUT}.img"
+
+[ ! -z "${INSTALL_SCRIPT}" ] && echo -e "\n-> WARNING this image is like a virus!. Be careful, it is autoinstalable!\n"
+
 # EOF
