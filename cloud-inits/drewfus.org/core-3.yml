@@ -29,12 +29,15 @@ write_files:
       [Network]
       DNS=192.168.1.1
       Address=172.16.0.3/12
+
+      [Route]
       Gateway=172.16.0.1
+      Scope=link
       
 coreos:
   etcd2:
     # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
-    discovery: https://discovery.etcd.io/387c2db976c07ce2681ff2725fe5acc9
+    discovery: https://discovery.etcd.io/f416c03d35694f07ead1bcb489da6653
     # multi-region and multi-cloud deployments need to use $public_ipv4
     advertise-client-urls: http://192.168.1.4:2379
     initial-advertise-peer-urls: http://192.168.1.4:2380
