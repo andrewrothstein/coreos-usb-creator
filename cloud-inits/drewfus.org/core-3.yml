@@ -36,13 +36,12 @@ write_files:
       
 coreos:
   etcd2:
-    # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
-    discovery: https://discovery.etcd.io/f416c03d35694f07ead1bcb489da6653
-    # multi-region and multi-cloud deployments need to use $public_ipv4
+    name: core-3
     advertise-client-urls: http://192.168.1.4:2379
     initial-advertise-peer-urls: http://192.168.1.4:2380
-    # listen on both the official ports and the legacy ports
-    # legacy ports can be omitted if your application doesn't depend on them
+    initial-cluster-token: af23b408-c0ea-11e6-8d33-3fdc1f9c2d79
+    initial-cluster: core-1=http://192.168.1.2:2380,core-2=http://192.168.1.3:2380,core-3=http://192.168.1.4:2380
+    initial-cluster-state: new
     listen-client-urls: http://0.0.0.0:2379
     listen-peer-urls: http://192.168.1.4:2380
   fleet:
@@ -62,6 +61,13 @@ coreos:
     - name: systemd-networkd.service
       command: restart
     - name: etcd2.service
+      command: start
+    - name: flanneld.service
+      drop-ins:
+        - name: 50-network-config.conf
+          content: |
+            [Service]
+            ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16" }'
       command: start
     - name: fleet.service
       command: start
@@ -84,7 +90,7 @@ coreos:
         - name: 10-docker-opts.conf
           content: |
             [Service]
-            Environment="DOCKER_OPTS=--bip 10.0.125.1/8"
+            Environment="DOCKER_OPTS=--bip 10.4.0.1/16"
     - name: docker.service
       command: start
 
