@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -xe
 #
 # Coreos image builder (hybrid ISO and FAT32 IMG) for Linux
 # (c) 2014-2015 Jose Riguera <jriguera@gmail.com>
