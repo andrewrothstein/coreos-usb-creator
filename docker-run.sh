@@ -26,14 +26,6 @@ function write-image() {
     echo done!
 }
 
-function write-images() {
-    local DOMAIN=$1
-    echo writing images for $DOMAIN...
-#    write-image core-1 $DOMAIN
-#    write-image core-2 $DOMAIN
-    write-image core-3 $DOMAIN
-    echo done writing images for $DOMAIN!
-}
-
-
-write-images drewfus.org
+NODE=${NODE:-core-1}
+DOMAIN=${DOMAIN:-drewfus.org}
+write-image $NODE $DOMAIN
