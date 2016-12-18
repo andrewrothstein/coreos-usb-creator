@@ -22,7 +22,7 @@ function write-image() {
 	   --autologin \
 	   --coreoschannel stable \
 	   --cloudconfig cloud-inits/$DOMAIN/$NODE.yml \
-	   --addlbootparams "rd.auto=1" \
+	   --addlbootparams "rd.auto=1 root=LABEL=ROOT" \
 	   -o $HOSTNAME
     echo done!
 }

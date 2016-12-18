@@ -412,11 +412,11 @@ while getopts "haus:v:l:c:o:k:i:-:" optchar; do
                 cloudconfigurl)
                   eval CLOUD_CONFIG_URL="\$${OPTIND}"
                   OPTIND=$(($OPTIND + 1))
-                  ;;
+                ;;
 		addlbootparams)
-		    eval ADDL_BOOT_PARAMS="\$${ADDL_BOOT_PARAMS}"
-		    OPTIND=$(($OPTIND + 1))
-		    ;;
+		  eval ADDL_BOOT_PARAMS="\$${OPTIND}"
+		  OPTIND=$(($OPTIND + 1))
+		;;
                 *)
                   echo "Unknown arg: ${OPTARG}"
                   exit 1
@@ -482,7 +482,7 @@ COREOS_INITRD_URL="${COREOS_BASE_URL}/${COREOS_VERSION}/${COREOS_INITRD_BASENAME
 [ "${AUTOLOGIN}" == "1" ] && BOOT_PARAMS="${BOOT_PARAMS} coreos.autologin"
 [ ! -z "${SSHKEY}" ] && BOOT_PARAMS="${BOOT_PARAMS} sshkey=\"${SSHKEY}\""
 [ ! -z "${CLOUD_CONFIG_URL}" ] && BOOT_PARAMS="${BOOT_PARAMS} cloud-config-url=\"${CLOUD_CONFIG_URL}\""
-[ ! -x "${ADDL_BOOT_PARAMS}" ] && BOOT_PARAMS="${BOOT_PARAMS} ${ADDL_BOOT_PARAMS}"
+[ ! -z "${ADDL_BOOT_PARAMS}" ] && BOOT_PARAMS="${BOOT_PARAMS} ${ADDL_BOOT_PARAMS}"
 
 # Check if the needed files exist
 [ ! -z "${INSTALL_SCRIPT}" ] && [ -f "${INSTALL_SCRIPT}" ] && INSTALL_SCRIPT="${PROGRAM_DIR}/${INSTALL_SCRIPT}"
